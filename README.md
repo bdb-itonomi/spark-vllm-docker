@@ -10,6 +10,14 @@ Some of the steps and parameters may be unnecessary, and some may be missing. Th
 
 The Dockerfile builds from the main branch of VLLM, so depending on when you run the build process, it may not be in fully functioning state.
 
+## CHANGELOG
+
+### 2025-11-26
+
+Initial release.
+Updated RoCE configuration example to include both interfaces in the list.
+Applied patch to enable FastSafeTensors in cluster configuration (EXPERIMENTAL) and added documentation on fastsafetensors use.
+
 ## 1\. Building the Docker Image
 
 The Dockerfile includes specific **Build Arguments** to allow you to selectively rebuild layers (e.g., update the vLLM source code without re-downloading PyTorch).
@@ -198,7 +206,21 @@ docker exec -it vllm_node
 
 And execute vllm command inside.
 
-## 6\. Benchmarking
+## 6\. Fastsafetensors
+
+This build includes support for fastsafetensors loading which significantly improves loading speeds, especially on DGX Spark where MMAP performance is very poor currently.
+[Fasttensors](https://github.com/foundation-model-stack/fastsafetensors/) solve this issue by using more efficient multi-threaded loading while avoiding mmap.
+
+This build also implements an EXPERIMENTAL patch to allow use of fastsafetensors in a cluster configuration (it won't work without it!).
+Please refer to [this issue](https://github.com/foundation-model-stack/fastsafetensors/issues/36) for the details.
+
+To use this method, simply include `--load-format fastsafetensors` when running VLLM, for example:
+
+```bash
+HF_HUB_OFFLINE=1 vllm serve openai/gpt-oss-120b --port 8888 --host 0.0.0.0 --trust_remote_code --swap-space 16 --gpu-memory-utilization 0.7 -tp 2 --distributed-executor-backend ray --load-format fastsafetensors
+```
+
+## 7\. Benchmarking
 
 Follow the guidance in [VLLM Benchmark Suites](https://docs.vllm.ai/en/latest/contributing/benchmarks/) to download benchmarking dataset, and then run a benchmark with a command like this (assuming you are running on head node, otherwise specify `--host` parameter):
 

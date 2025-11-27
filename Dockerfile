@@ -80,6 +80,10 @@ RUN python3 use_existing_torch.py && \
     sed -i "/flashinfer/d" requirements/cuda.txt && \
     pip install -r requirements/build.txt
 
+# TEMPORARY PATCH for fastsafetensors loading in cluster setup - tracking https://github.com/foundation-model-stack/fastsafetensors/issues/36
+COPY fastsafetensors.patch .
+RUN patch -p1 < fastsafetensors.patch
+
 # Final Build
 # Uses --no-build-isolation to respect the pre-installed Torch/FlashInfer
 RUN pip install --no-build-isolation . -v
